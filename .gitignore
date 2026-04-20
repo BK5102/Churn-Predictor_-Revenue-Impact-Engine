@@ -1,0 +1,66 @@
+# ============================================
+# Data files - never commit raw data to GitHub
+# ============================================
+data/*.csv
+data/*.xlsx
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+# But DO track a README in data/ explaining how to download
+!data/README.md
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================
+# Virtual environments
+# ============================================
+venv/
+env/
+ENV/
+.venv/
+
+# ============================================
+# Jupyter Notebooks
+# ============================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ============================================
+# VS Code
+# ============================================
+.vscode/
+*.code-workspace
+
+# ============================================
+# Environment variables / secrets
+# ============================================
+.env
+.env.local
+*.key
+
+# ============================================
+# OS files
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Model artifacts (too big for git)
+# ============================================
+models/*.pkl
+models/*.joblib
+*.h5
