@@ -2,15 +2,15 @@
 
 > Predicting customer churn for a telecom provider and quantifying the revenue saved by targeted retention interventions.
 
-**Status:** ✅ Pipeline complete. Headline numbers below are populated by running the notebooks end-to-end against the Kaggle dataset.
+**Status:** Pipeline complete. 
 
 ---
 
 ## The Business Problem
 
-Customer churn is expensive. For a subscription business, losing a customer means losing not just this month's revenue but the entire remaining customer lifetime. But retention interventions also cost money — discounts, support calls, and contract incentives eat into margin. The question isn't *"can we predict churn?"* — it's *"at what churn probability does intervention pay for itself, and which intervention pays for itself fastest?"*
+Customer churn is expensive. For a subscription business, losing a customer means losing not just this month's revenue but the entire remaining customer lifetime. But retention interventions also cost money (discounts), support calls, and contract incentives eat into margin. The question is *"at what churn probability does intervention pay for itself, and which intervention pays for itself fastest?"*
 
-This project answers those questions using the Telco Customer Churn dataset, a standard benchmark of ~7,000 telecom customers with subscription details and churn labels.
+This project answers those questions using the Telco Customer Churn Kaggle dataset, a standard benchmark of ~7,000 telecom customers with subscription details and churn labels.
 
 ## Key Questions
 
@@ -29,40 +29,18 @@ This project answers those questions using the Telco Customer Churn dataset, a s
 | Overall churn rate | **26.6%** | `01_eda.ipynb` |
 | Logistic regression test AUC | **0.835** | `02_baseline_model.ipynb` |
 | XGBoost test AUC | **0.830** | `03_xgboost.ipynb` |
-| Total MRR (snapshot) | **$455,661** | `01_eda.ipynb` § 5 |
+| Total MRR | **$455,661** | `01_eda.ipynb` § 5 |
 | 12-month MRR from actual churners | **$1,669,570** | `01_eda.ipynb` § 5 |
-| Optimal intervention threshold τ* | **0.10** (default assumptions) | `04_cost_analysis.ipynb` |
+| Optimal intervention threshold τ* | **0.10** | `04_cost_analysis.ipynb` |
 | Lift vs. do-nothing baseline (test set) | **+$144,379** over 12 months | `04_cost_analysis.ipynb` |
 | Top strategy by **net value** | Combined discount + addon (ROI 1.42×) | `06_retention_strategies.ipynb` |
 | Top strategy by **ROI** | Free security addon, 6mo (ROI 2.56×) | `06_retention_strategies.ipynb` |
 
-**Note on AUC:** logistic regression edges out XGBoost by 0.005 here — meaningfully tied at this dataset size. With ~7k rows and well-separated bucketed features, the linear model captures most of the signal. XGBoost would likely pull ahead on a larger dataset or with richer interaction terms; for this scale, the more interpretable LR is a defensible production choice.
+**Note on AUC:** logistic regression edges out XGBoost by 0.005 here — meaningfully tied at this dataset size. With ~7k rows and well-separated bucketed features, the linear model captures most of the signal. 
 
 **Note on the τ\* = 0.10:** the optimal threshold falls below the modeling default of 0.5 because the average CLV ($65/mo × 12 = $780) is large relative to the $50 intervention cost — even modestly-likely churners are worth targeting. The notebook's sensitivity heatmap shows τ\* climbing above 0.5 only when intervention cost exceeds $150 or success rate falls below 15%.
 
-**Note on the negative `net_value` numbers in the strategy table:** `net_value = saved_revenue − intervention_costs − unrecovered_churn_losses`, so it is realized total profit (negative because we can't save 100% of churners), not delta vs. baseline. The headline number to quote is **lift vs. do-nothing** (+$144K on the test set, ≈ +$720K extrapolated to the full base over 12 months).
-
-## Dashboard
-
-Tableau-ready CSVs are produced by `notebooks/05_dashboard_export.ipynb` into `data/dashboard/`:
-
-- `at_risk_cohorts.csv` — per-customer scores tagged with risk × revenue priority bucket
-- `cohort_summary.csv` — KPI aggregates per priority bucket
-- `churn_by_tenure_contract.csv` — churn-rate matrix for the headline heatmap
-- `customer_features.csv` — engineered features (tenure bucket, MRR tier, add-on counts)
-
-### Building the workbook
-
-1. Run `notebooks/05_dashboard_export.ipynb` — generates the four CSVs above.
-2. In Tableau Public Desktop, connect to `at_risk_cohorts.csv` as the primary data source; add the others as secondary sources joined on `priority_bucket` / `tenure_bucket`.
-3. Recommended dashboard layout:
-   - **Top row (KPI cards):** customer base, total MRR, expected revenue at risk, customers targeted at τ\*.
-   - **Cohort treemap:** `priority_bucket` × `MonthlyCharges` (size) × `churn_probability` (color).
-   - **Heatmap:** churn rate by `tenure_bucket × Contract` (the EDA's clearest segmentation).
-   - **Action table:** top-N highest `expected_revenue_at_risk` customers with `Contract` + `PaymentMethod` for action recommendations.
-4. Publish to Tableau Public and replace the line below.
-
-*Tableau Public link: TBD — link will be added here once the workbook is published.*
+**Note on the negative `net_value` numbers in the strategy table:** `net_value = saved_revenue − intervention_costs − unrecovered_churn_losses`, so it is total profit, not delta vs. baseline. The headline number to quote is **lift vs. do-nothing**
 
 ---
 
@@ -72,18 +50,18 @@ Tableau-ready CSVs are produced by `notebooks/05_dashboard_export.ipynb` into `d
 - **Source:** [Telco Customer Churn dataset (Kaggle)](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
 - **Size:** ~7,000 customers, 21 features
 - **Target:** Binary `Churn` label
-- **Loading:** via `kagglehub` (see `data/README.md`); the loader handles the known `TotalCharges` blank-row quirk for tenure=0 customers.
+- **Loading:** via `kagglehub` (see `data/README.md`); the loader handles the known `TotalCharges` blank-row for tenure=0 customers.
 
 ### Pipeline
 1. **EDA** (`01_eda.ipynb`) — churn rate, feature-target relationships, MRR at risk.
-2. **Baseline model** (`02_baseline_model.ipynb`) — logistic regression with `class_weight="balanced"` to handle the 73/27 split.
-3. **Tree model** (`03_xgboost.ipynb`) — XGBoost with `scale_pos_weight`, head-to-head vs LR on the same split.
-4. **Cost-sensitive analysis** (`04_cost_analysis.ipynb`) — sweep thresholds, find the τ that maximizes net realized value, run a 5×5 sensitivity heatmap over `intervention_cost × success_rate`.
+2. **Baseline model** (`02_baseline_model.ipynb`) — logistic regression to handle the 73/27 split.
+3. **Tree model** (`03_xgboost.ipynb`) — XGBoost vs LR on the same split.
+4. **Cost-sensitive analysis** (`04_cost_analysis.ipynb`) — sweep thresholds, find the τ that maximizes net value, run a 5×5 sensitivity heatmap 
 5. **SQL feature engineering** (`sql/01_feature_engineering.sql`, `sql/02_at_risk_cohorts.sql`) — analyst-facing views: bucketed features, priority cohorts, KPI aggregates.
 6. **Dashboard export** (`05_dashboard_export.ipynb`) — orchestrates everything: out-of-fold CV predictions for every customer, SQLite load, runs the SQL files, exports Tableau-ready CSVs.
 7. **Strategy ranking** (`06_retention_strategies.ipynb`) — each retention play (discount / addon / contract upgrade / premium support / combined) becomes a (cost, success_rate) tuple. Each strategy gets its own optimal threshold; we compare on both net value and ROI, with a ±30% sensitivity check on the success-rate assumption.
 
-### Key Assumptions (Cost-Sensitive Layer)
+### Key Assumptions
 
 These are placeholders for the user to override with real ops data. They live in `src/cost_analysis.CostAssumptions`:
 
@@ -97,7 +75,7 @@ The decision rule reduces to: **intervene iff `P(churn) × success_rate × CLV >
 
 ### Class imbalance and metric choice
 
-Churn is ~27% positive. Accuracy is misleading at this rate (a model that always predicts "stay" still scores 73%). Reported metrics lead with **AUC** and **recall on the churn class**; the cost-sensitive analysis takes precedence over any metric for the deployment decision.
+Churn is ~27% positive. Accuracy is misleading at this rate. Reported metrics lead with **AUC** and **recall on the churn class**; the cost-sensitive analysis takes precedence over any metric for the deployment decision.
 
 ---
 
@@ -161,15 +139,6 @@ jupyter notebook
 ```
 
 Each notebook is self-contained — you can re-run any one of them without re-executing the earlier ones, since the `src/` modules handle loading and featurization deterministically.
-
----
-
-## Roadmap
-
-- [x] **Week 1 — Foundation:** EDA, baseline model, XGBoost comparison
-- [x] **Week 2 — Business Layer:** Cost-sensitive analysis, optimal threshold
-- [x] **Week 3 — Pipeline + Dashboard:** SQL feature engineering, Tableau-ready exports
-- [x] **Week 4 — Polish:** Retention strategy ranking, README, feature importance
 
 ---
 
