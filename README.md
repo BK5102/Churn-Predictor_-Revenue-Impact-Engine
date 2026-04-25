@@ -21,16 +21,26 @@ This project answers those questions using the Telco Customer Churn dataset, a s
 
 ## Headline Results
 
-> Run `notebooks/03_xgboost.ipynb`, `04_cost_analysis.ipynb`, and `06_retention_strategies.ipynb` to populate the values below for your run.
+> Numbers below are produced by `scripts/compute_headline_metrics.py` running the full pipeline against the Kaggle dataset. Reproduce with `python scripts/compute_headline_metrics.py`.
 
 | Metric | Value | Source |
 |---|---|---|
-| Overall churn rate | ~26.5% | `01_eda.ipynb` |
-| XGBoost test AUC | _populated by_ `03_xgboost.ipynb` | head-to-head vs LR |
-| 12-month MRR at risk | _populated by_ `01_eda.ipynb` § 5 | sum of MonthlyCharges × 12 for predicted churners |
-| Optimal intervention threshold τ* | _populated by_ `04_cost_analysis.ipynb` | argmax of net realized value |
-| Top strategy by **net value** | _populated by_ `06_retention_strategies.ipynb` | absolute $ saved |
-| Top strategy by **ROI** | _populated by_ `06_retention_strategies.ipynb` | $ saved per $ spent |
+| Customer base | 7,032 (after dropping 11 tenure=0 rows) | `data_loader.load_clean()` |
+| Overall churn rate | **26.6%** | `01_eda.ipynb` |
+| Logistic regression test AUC | **0.835** | `02_baseline_model.ipynb` |
+| XGBoost test AUC | **0.830** | `03_xgboost.ipynb` |
+| Total MRR (snapshot) | **$455,661** | `01_eda.ipynb` § 5 |
+| 12-month MRR from actual churners | **$1,669,570** | `01_eda.ipynb` § 5 |
+| Optimal intervention threshold τ* | **0.10** (default assumptions) | `04_cost_analysis.ipynb` |
+| Lift vs. do-nothing baseline (test set) | **+$144,379** over 12 months | `04_cost_analysis.ipynb` |
+| Top strategy by **net value** | Combined discount + addon (ROI 1.42×) | `06_retention_strategies.ipynb` |
+| Top strategy by **ROI** | Free security addon, 6mo (ROI 2.56×) | `06_retention_strategies.ipynb` |
+
+**Note on AUC:** logistic regression edges out XGBoost by 0.005 here — meaningfully tied at this dataset size. With ~7k rows and well-separated bucketed features, the linear model captures most of the signal. XGBoost would likely pull ahead on a larger dataset or with richer interaction terms; for this scale, the more interpretable LR is a defensible production choice.
+
+**Note on the τ\* = 0.10:** the optimal threshold falls below the modeling default of 0.5 because the average CLV ($65/mo × 12 = $780) is large relative to the $50 intervention cost — even modestly-likely churners are worth targeting. The notebook's sensitivity heatmap shows τ\* climbing above 0.5 only when intervention cost exceeds $150 or success rate falls below 15%.
+
+**Note on the negative `net_value` numbers in the strategy table:** `net_value = saved_revenue − intervention_costs − unrecovered_churn_losses`, so it is realized total profit (negative because we can't save 100% of churners), not delta vs. baseline. The headline number to quote is **lift vs. do-nothing** (+$144K on the test set, ≈ +$720K extrapolated to the full base over 12 months).
 
 ## Dashboard
 
@@ -41,7 +51,18 @@ Tableau-ready CSVs are produced by `notebooks/05_dashboard_export.ipynb` into `d
 - `churn_by_tenure_contract.csv` — churn-rate matrix for the headline heatmap
 - `customer_features.csv` — engineered features (tenure bucket, MRR tier, add-on counts)
 
-*Tableau Public link will be added here once the workbook is published.*
+### Building the workbook
+
+1. Run `notebooks/05_dashboard_export.ipynb` — generates the four CSVs above.
+2. In Tableau Public Desktop, connect to `at_risk_cohorts.csv` as the primary data source; add the others as secondary sources joined on `priority_bucket` / `tenure_bucket`.
+3. Recommended dashboard layout:
+   - **Top row (KPI cards):** customer base, total MRR, expected revenue at risk, customers targeted at τ\*.
+   - **Cohort treemap:** `priority_bucket` × `MonthlyCharges` (size) × `churn_probability` (color).
+   - **Heatmap:** churn rate by `tenure_bucket × Contract` (the EDA's clearest segmentation).
+   - **Action table:** top-N highest `expected_revenue_at_risk` customers with `Contract` + `PaymentMethod` for action recommendations.
+4. Publish to Tableau Public and replace the line below.
+
+*Tableau Public link: TBD — link will be added here once the workbook is published.*
 
 ---
 
@@ -104,6 +125,8 @@ churn-predictor/
 │   ├── model.py                   # LR + XGBoost trainers (imbalance-aware)
 │   ├── evaluation.py              # Metrics, ROC, confusion, importances
 │   └── cost_analysis.py           # Cost-sensitive policy framework
+├── scripts/
+│   └── compute_headline_metrics.py  # Reruns the pipeline and prints README values
 ├── requirements.txt
 └── README.md
 ```
@@ -158,4 +181,6 @@ Python · pandas · scikit-learn · XGBoost · SQLite · SQL · kagglehub · Tab
 
 ## Author
 
-*Your name · [LinkedIn](#) · [Portfolio](#)*
+**Bhavana Kannan** · [LinkedIn](#) · [Portfolio](#)
+
+*Replace the `#` placeholders above with your LinkedIn and portfolio URLs.*
