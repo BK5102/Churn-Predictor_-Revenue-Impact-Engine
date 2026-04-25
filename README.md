@@ -144,7 +144,7 @@ Each notebook is self-contained — you can re-run any one of them without re-ex
 
 ## Tech Stack
 
-Python · pandas · scikit-learn · XGBoost · SQLite · SQL · kagglehub · Tableau Public · Jupyter
+Python · pandas · scikit-learn · XGBoost · SQLite · SQL · kagglehub · Jupyter
 
 ---
 
