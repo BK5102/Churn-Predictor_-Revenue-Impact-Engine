@@ -150,6 +150,4 @@ Python · pandas · scikit-learn · XGBoost · SQLite · SQL · kagglehub · Tab
 
 ## Author
 
-**Bhavana Kannan** · [LinkedIn](#) · [Portfolio](#)
-
-*Replace the `#` placeholders above with your LinkedIn and portfolio URLs.*
+**Bhavana Kannan**
