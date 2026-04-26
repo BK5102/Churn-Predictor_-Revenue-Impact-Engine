@@ -1,4 +1,4 @@
-# Churn Predictor + Revenue Impact Engine
+# Churn ROI
 
 > Predicting customer churn for a telecom provider and quantifying the revenue saved by targeted retention interventions.
 
