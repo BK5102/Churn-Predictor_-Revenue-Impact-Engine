@@ -19,6 +19,17 @@ This project answers those questions using the Telco Customer Churn Kaggle datas
 3. At what predicted churn probability should the business intervene, given the cost and success rate of interventions?
 4. Among possible retention strategies (discounts, contract upgrades, premium support), which has the best ROI?
 
+## Why This Is More Than a Churn Classifier
+The main goal is to support a retention budget decision: which customers should receive an intervention, and which retention strategy has the highest expected return?
+
+The model output is converted into an economic decision rule:
+
+intervene iff P(churn) × retention_success_rate × CLV > intervention_cost.
+
+Because the optimal threshold depends on business assumptions, the project includes cost-sensitive threshold optimization, ROI-ranked retention strategies, and sensitivity analysis across intervention cost and success rate. The reported business lift is measured against a do-nothing baseline and can be reproduced with `scripts/compute_headline_metrics.py`.
+
+The dataset is a public benchmark, so the novelty is not the raw churn prediction task. The value is the end-to-end decision framework: model comparison, MRR-at-risk analysis, SQL cohort views, dashboard-ready exports, and explicit assumptions that can be replaced with real company data.
+
 ## Headline Results
 
 > Numbers below are produced by `scripts/compute_headline_metrics.py` running the full pipeline against the Kaggle dataset. Reproduce with `python scripts/compute_headline_metrics.py`.
